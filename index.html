@@ -13,12 +13,12 @@
   <style>
     * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', system-ui, sans-serif; }
     body { background:#f4f8fb; display:flex; justify-content:center; align-items:center; min-height:100vh; margin:0; padding:8px; }
-    .app-container { max-width:480px; width:100%; background:white; border-radius:24px; box-shadow:0 10px 25px rgba(0,0,0,0.08); overflow:hidden; display:flex; flex-direction:column; height:100vh; max-height:780px; }
+    .app-container { max-width:500px; width:100%; background:white; border-radius:24px; box-shadow:0 10px 25px rgba(0,0,0,0.08); overflow:hidden; display:flex; flex-direction:column; height:100vh; max-height:800px; }
     .header { background:linear-gradient(135deg,#0a7e8c,#0b5e6b); color:white; padding:12px 16px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; gap:8px; }
     .logo { display:flex; align-items:center; gap:6px; }
     .logo-icon { background:white; color:#0a7e8c; width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:bold; }
-    .logo h1 { font-size:1.2rem; font-weight:700; letter-spacing:-0.5px; }
-    .badge { background:rgba(255,255,255,0.2); padding:4px 10px; border-radius:16px; font-size:0.7rem; font-weight:600; }
+    .logo h1 { font-size:1.2rem; font-weight:700; }
+    .badge { background:rgba(255,255,255,0.2); padding:4px 10px; border-radius:16px; font-size:0.7rem; }
     .main-content { flex:1; overflow-y:auto; padding:10px 12px; display:flex; flex-direction:column; gap:8px; }
     .section-title { font-size:0.95rem; font-weight:700; color:#1a2b3c; display:flex; align-items:center; gap:6px; margin-bottom:2px; }
     .card { background:#fff; border-radius:16px; padding:12px; box-shadow:0 4px 12px rgba(0,0,0,0.03); border:1px solid #edf2f7; }
@@ -33,10 +33,10 @@
     .radius-info { background:#e8f4f6; border-radius:12px; padding:8px 12px; display:flex; align-items:center; justify-content:space-between; margin:4px 0; font-size:0.8rem; }
     .command-count { font-weight:700; font-size:1rem; color:#0a7e8c; }
     .price-badge { background:#0a7e8c; color:white; padding:4px 12px; border-radius:16px; font-weight:700; font-size:0.85rem; }
-    .action-btn { background:#1a2b3c; border:none; color:white; padding:12px; border-radius:14px; font-weight:700; font-size:0.9rem; width:100%; cursor:pointer; transition:0.2s; margin-top:4px; }
+    .action-btn { background:#1a2b3c; border:none; color:white; padding:12px; border-radius:14px; font-weight:700; font-size:0.9rem; width:100%; cursor:pointer; margin-top:4px; }
     .action-btn:active { background:#0f1e2b; }
-    .history-list, .admin-list { display:flex; flex-direction:column; gap:8px; }
-    .history-item, .admin-item { background:#f9fafb; border-radius:14px; padding:10px 12px; border-left:4px solid #0a7e8c; font-size:0.8rem; cursor:pointer; }
+    .history-list, .admin-list, .order-list { display:flex; flex-direction:column; gap:8px; }
+    .history-item, .admin-item, .order-item { background:#f9fafb; border-radius:14px; padding:10px 12px; border-left:4px solid #0a7e8c; font-size:0.8rem; cursor:pointer; }
     .history-item:hover, .admin-item:hover { background:#edf2f7; }
     .admin-item.livred { background:#e6ffed; border-left-color:#28a745; }
     .footer-nav { display:flex; border-top:1px solid #edf2f7; background:white; flex-shrink:0; }
@@ -47,6 +47,8 @@
     select { width:100%; padding:8px; border-radius:10px; border:1px solid #e2e8f0; margin-top:6px; font-size:0.8rem; }
     small { font-size:0.65rem; }
     .delete-btn { background:#dc3545; color:white; border:none; padding:4px 10px; border-radius:8px; font-size:0.7rem; cursor:pointer; margin-left:8px; }
+    .validate-btn { background:#28a745; color:white; border:none; padding:6px 12px; border-radius:8px; font-size:0.75rem; cursor:pointer; }
+    .btn-sm { padding:4px 8px; font-size:0.7rem; }
   </style>
 </head>
 <body>
@@ -116,7 +118,7 @@
     <button class="action-btn" id="backToHistoryBtn">📋 Retour historique</button>
   </div>
 
-  <!-- Vue Admin / Suivi global -->
+  <!-- Vue Admin -->
   <div class="main-content hidden" id="viewAdmin">
     <div class="section-title">🗺️ Suivi global</div>
     <div class="card">
@@ -129,7 +131,7 @@
     </div>
   </div>
 
-  <!-- Vue Livreur -->
+  <!-- Vue Livreur (multi-commandes) -->
   <div class="main-content hidden" id="viewLivreur">
     <div class="section-title">🛵 Espace Livreur</div>
     <div class="card">
@@ -137,14 +139,15 @@
       <div class="input-group"><label>Contact</label><input type="tel" id="livreurContact" placeholder="Ex: 01 02 03 04 05"></div>
       <div class="input-group"><label>Adresse actuelle</label><input type="text" id="livreurAdresse" placeholder="Où vous trouvez-vous ?"></div>
       <button class="action-btn" id="startLivreurSession">🔛 Démarrer ma session</button>
-      <div id="livreurActive" class="hidden">
+      <div id="livreurPanel" class="hidden">
         <hr style="margin:8px 0;">
-        <p style="font-size:0.8rem;">Commandes à livrer :</p>
-        <select id="orderSelect" size="3"></select>
-        <button class="action-btn" id="startDeliveryBtn" style="margin-top:6px;">🚀 Prendre cette commande</button>
-        <div id="livraisonEnCours" class="hidden">
-          <p style="margin-top:6px; font-size:0.8rem;">🔴 Livraison en cours... Position partagée.</p>
-          <button class="action-btn" id="finishDeliveryBtn">✅ Terminer</button>
+        <div id="livreurDispoSection">
+          <p class="section-title">📦 Commandes disponibles</p>
+          <div id="dispoList" class="order-list"></div>
+        </div>
+        <div id="livreurEnCoursSection">
+          <p class="section-title">🛵 Mes livraisons en cours</p>
+          <div id="encoursList" class="order-list"></div>
         </div>
       </div>
     </div>
@@ -162,7 +165,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
 <script>
-  // ========== CONFIGURATION FIREBASE (REMPLACEZ AVEC VOS VALEURS) ==========
+  // ========== CONFIGURATION FIREBASE ==========
   const firebaseConfig = {
     apiKey: "AIzaSyC3_u7sJ47tQ5oHH-H8_rxtrS0NhFlZoZY",
     authDomain: "livraison-pro-plus.firebaseapp.com",
@@ -173,7 +176,7 @@
   };
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
-  // ========================================================================
+  // ===========================================
 
   const state = {
     clientLocation: { lat: 6.8206, lng: -5.2767 },
@@ -186,20 +189,20 @@
     pickupAddress: 'Quartier Habitat, Avenue de la Paix',
     product: 'Paracétamol 500mg',
     currentTrackingId: null,
-    livreurWatchId: null
+    livreurWatchId: null,
+    currentLivreurName: '' // identifiant du livreur connecté
   };
 
   let mainMap, clientMarker, pickupMarker, routeLayer;
   let trackingMap, trackingMarker, trackingRouteLayer, clientTrackingMarker;
   let adminMap, adminMarkers = {};
   let selectedMarkerMode = 'client';
-  let adminUnsubscribe = null;
+  let adminUnsubscribe = null, livreurUnsubscribe = null;
 
-  // Initialisation des cartes avec vérification de l'élément DOM
   function safeInitMap(mapId, options) {
     const el = document.getElementById(mapId);
-    if (!el) { console.error("Élément de carte introuvable:", mapId); return null; }
-    if (el._leaflet_id) return el._leaflet; // déjà initialisée
+    if (!el) return null;
+    if (el._leaflet_id) return el._leaflet;
     const map = L.map(mapId, options);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
     return map;
@@ -292,9 +295,8 @@
     );
   }
 
-  // Envoi WhatsApp
   function sendWhatsAppMessage(orderData) {
-    const phone = "2250142931931"; // numéro au format international sans le +
+    const phone = "2250142931931";
     const message = encodeURIComponent(
       `🚀 Nouvelle commande Livraison Pro+\n` +
       `👤 Client: ${orderData.client} (${orderData.clientContact})\n` +
@@ -305,10 +307,10 @@
       `💰 Prix: ${orderData.price} FCFA\n` +
       `📅 Date: ${new Date().toLocaleString('fr-FR')}`
     );
-    const url = `https://wa.me/${phone}?text=${message}`;
-    window.open(url, '_blank');
+    window.open(`https://wa.me/${phone}?text=${message}`, '_blank');
   }
 
+  // Client : commander
   document.getElementById('submitOrderBtn').addEventListener('click', async () => {
     const nom = document.getElementById('clientName').value.trim();
     const contact = document.getElementById('clientContact').value.trim();
@@ -331,7 +333,6 @@
     try {
       const docRef = await db.collection('commandes').add(orderData);
       alert(`✅ Commande enregistrée !`);
-      // Envoyer WhatsApp
       sendWhatsAppMessage({...orderData, clientLocation: state.clientLocation, pickupLocation: state.pickupLocation});
       loadHistory();
       updateNearbyStats();
@@ -341,6 +342,7 @@
     } catch(e) { alert('Erreur : ' + e.message); }
   });
 
+  // Suivi client
   function initTrackingMap() {
     if (trackingMap) return;
     trackingMap = safeInitMap('trackingMap', { center: [state.pickupLocation.lat, state.pickupLocation.lng], zoom: 15, zoomControl: false, attributionControl: false });
@@ -373,19 +375,6 @@
         const minutes = Math.round((dist / 30) * 60);
         document.getElementById('trackingTime').textContent = minutes + ' min';
       }
-      const startPos = data.pickupLocation || new firebase.firestore.GeoPoint(state.pickupLocation.lat, state.pickupLocation.lng);
-      const endPos = data.livreurPosition || startPos;
-      fetch(`https://router.project-osrm.org/route/v1/driving/${startPos.longitude},${startPos.latitude};${endPos.longitude},${endPos.latitude}?geometries=geojson&overview=full`)
-        .then(res => res.json())
-        .then(routeData => {
-          if (routeData.routes?.[0]) {
-            const coords = routeData.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
-            if (trackingRouteLayer) trackingMap.removeLayer(trackingRouteLayer);
-            trackingRouteLayer = L.polyline(coords, { color: '#0a7e8c', weight: 4, opacity: 0.6 }).addTo(trackingMap);
-            trackingMap.fitBounds(trackingRouteLayer.getBounds().pad(0.3));
-          }
-        });
-      clientTrackingMarker.setLatLng([state.clientLocation.lat, state.clientLocation.lng]);
     });
   }
 
@@ -429,98 +418,176 @@
     } catch(e) { container.innerHTML = '<p>Erreur.</p>'; }
   }
 
+  // Admin
   function initAdminView() {
     if (!adminMap) {
       adminMap = safeInitMap('adminMap', { center: [6.8206, -5.2767], zoom: 13, zoomControl: false, attributionControl: false });
     }
     if (adminUnsubscribe) adminUnsubscribe();
-
-    adminUnsubscribe = db.collection('commandes')
-      .where('status', 'in', ['en_cours', 'livré'])
-      .onSnapshot(snapshot => {
-        const currentIds = new Set();
-        snapshot.forEach(doc => {
-          if (doc.data().status === 'en_cours') currentIds.add(doc.id);
-        });
-        Object.keys(adminMarkers).forEach(id => {
-          if (!currentIds.has(id)) {
-            adminMap.removeLayer(adminMarkers[id]);
-            delete adminMarkers[id];
-          }
-        });
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          if (data.status === 'en_cours' && data.livreurPosition) {
-            const pos = data.livreurPosition;
-            if (adminMarkers[doc.id]) {
-              adminMarkers[doc.id].setLatLng([pos.latitude, pos.longitude]);
-            } else {
-              const icon = L.divIcon({ html: '<div style="background:#e63946; width:28px; height:28px; border-radius:50%; border:2px solid white; display:flex; align-items:center; justify-content:center;">🛵</div>', className: '', iconSize: [28,28], iconAnchor: [14,14] });
-              const marker = L.marker([pos.latitude, pos.longitude], { icon }).addTo(adminMap);
-              marker.bindTooltip(`${data.livreur || 'Livreur'} - ${data.product}`);
-              adminMarkers[doc.id] = marker;
-            }
-          }
-        });
-        document.getElementById('adminCount').textContent = Object.keys(adminMarkers).length;
-
-        const listContainer = document.getElementById('adminList');
-        if (!listContainer) return;
-        let html = '';
-        if (snapshot.empty) {
-          html = '<p style="font-size:0.8rem;">Aucune commande en cours ou livrée.</p>';
-        } else {
-          const docs = [];
-          snapshot.forEach(doc => docs.push({ id: doc.id, data: doc.data() }));
-          docs.sort((a, b) => (b.data.date?.toMillis() || 0) - (a.data.date?.toMillis() || 0));
-
-          docs.forEach(({ id, data }) => {
-            const dateCommande = data.date ? data.date.toDate() : null;
-            const startedAt = data.startedAt ? data.startedAt.toDate() : null;
-            const isLivred = data.status === 'livré';
-            const livreurDisplay = data.livreurContact ? `${data.livreur || 'N/A'} (${data.livreurContact})` : (data.livreur || 'N/A');
-
-            let dateStr = 'Date inconnue';
-            if (dateCommande) {
-              const options = { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' };
-              dateStr = dateCommande.toLocaleDateString('fr-FR', options);
-            }
-            let collectStr = '';
-            if (startedAt) {
-              const options = { hour: '2-digit', minute: '2-digit' };
-              collectStr = `Collecté à ${startedAt.toLocaleTimeString('fr-FR', options)}`;
-            } else if (isLivred) {
-              collectStr = 'Heure de collecte non disponible';
-            }
-
-            html += `<div class="admin-item ${isLivred ? 'livred' : ''}" data-id="${id}">
-              <strong>${livreurDisplay}</strong> - ${data.product}<br>
-              <small>📋 Commande: ${dateStr}</small><br>
-              <small>📦 ${collectStr}</small>
-              ${isLivred ? `<button class="delete-btn" data-id="${id}">🗑 Supprimer</button>` : ''}
-            </div>`;
-          });
-        }
-        listContainer.innerHTML = html;
-
-        document.querySelectorAll('.delete-btn').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const id = btn.dataset.id;
-            if (confirm('Supprimer définitivement cette livraison ?')) {
-              db.collection('commandes').doc(id).delete().catch(err => alert('Erreur de suppression: ' + err.message));
-            }
-          });
-        });
+    adminUnsubscribe = db.collection('commandes').where('status', 'in', ['en_cours', 'livré']).onSnapshot(snapshot => {
+      const currentIds = new Set();
+      snapshot.forEach(doc => { if (doc.data().status === 'en_cours') currentIds.add(doc.id); });
+      Object.keys(adminMarkers).forEach(id => {
+        if (!currentIds.has(id)) { adminMap.removeLayer(adminMarkers[id]); delete adminMarkers[id]; }
       });
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        if (data.status === 'en_cours' && data.livreurPosition) {
+          const pos = data.livreurPosition;
+          if (adminMarkers[doc.id]) {
+            adminMarkers[doc.id].setLatLng([pos.latitude, pos.longitude]);
+          } else {
+            const icon = L.divIcon({ html: '<div style="background:#e63946; width:28px; height:28px; border-radius:50%; border:2px solid white; display:flex; align-items:center; justify-content:center;">🛵</div>', className: '', iconSize: [28,28], iconAnchor: [14,14] });
+            const marker = L.marker([pos.latitude, pos.longitude], { icon }).addTo(adminMap);
+            marker.bindTooltip(`${data.livreur || 'Livreur'} - ${data.product}`);
+            adminMarkers[doc.id] = marker;
+          }
+        }
+      });
+      document.getElementById('adminCount').textContent = Object.keys(adminMarkers).length;
+      const listContainer = document.getElementById('adminList');
+      if (!listContainer) return;
+      let html = '';
+      if (snapshot.empty) {
+        html = '<p style="font-size:0.8rem;">Aucune commande en cours ou livrée.</p>';
+      } else {
+        const docs = []; snapshot.forEach(doc => docs.push({ id: doc.id, data: doc.data() }));
+        docs.sort((a,b) => (b.data.date?.toMillis()||0) - (a.data.date?.toMillis()||0));
+        docs.forEach(({ id, data }) => {
+          const isLivred = data.status === 'livré';
+          const livreurDisplay = data.livreurContact ? `${data.livreur||'N/A'} (${data.livreurContact})` : (data.livreur||'N/A');
+          const dateCommande = data.date?.toDate();
+          const dateStr = dateCommande ? dateCommande.toLocaleDateString('fr-FR', {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'}) : 'Date inconnue';
+          const startedAt = data.startedAt?.toDate();
+          const collectStr = startedAt ? `Collecté à ${startedAt.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'})}` : (isLivred ? 'Heure collecte indisponible' : '');
+          html += `<div class="admin-item ${isLivred?'livred':''}" data-id="${id}">
+            <strong>${livreurDisplay}</strong> - ${data.product}<br>
+            <small>📋 Commande: ${dateStr}</small><br>
+            <small>📦 ${collectStr}</small>
+            ${isLivred ? `<button class="delete-btn" data-id="${id}">🗑 Supprimer</button>` : ''}
+          </div>`;
+        });
+      }
+      listContainer.innerHTML = html;
+      document.querySelectorAll('.delete-btn').forEach(b => b.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (confirm('Supprimer ?')) db.collection('commandes').doc(b.dataset.id).delete();
+      }));
+    });
   }
 
-  function stopAdminView() {
-    if (adminUnsubscribe) {
-      adminUnsubscribe();
-      adminUnsubscribe = null;
+  function stopAdminView() { if (adminUnsubscribe) { adminUnsubscribe(); adminUnsubscribe = null; } }
+
+  // ========== LIVREUR MULTI-COMMANDES ==========
+  function loadLivreurDisponibles() {
+    const dispoContainer = document.getElementById('dispoList');
+    if (!dispoContainer) return;
+    db.collection('commandes').where('status', '==', 'en_attente').onSnapshot(snap => {
+      let html = '';
+      if (snap.empty) html = '<p>Aucune commande disponible.</p>';
+      else {
+        snap.forEach(doc => {
+          const d = doc.data();
+          html += `<div class="order-item" style="display:flex; justify-content:space-between; align-items:center;">
+            <span>${d.product} - ${d.client} (${d.pickupName})</span>
+            <button class="validate-btn btn-sm" data-id="${doc.id}">Prendre</button>
+          </div>`;
+        });
+      }
+      dispoContainer.innerHTML = html;
+      document.querySelectorAll('#dispoList .validate-btn').forEach(btn => {
+        btn.addEventListener('click', () => prendreCommande(btn.dataset.id));
+      });
+    });
+  }
+
+  function prendreCommande(orderId) {
+    const nom = document.getElementById('livreurName').value.trim();
+    const contact = document.getElementById('livreurContact').value.trim();
+    const adresse = document.getElementById('livreurAdresse').value.trim();
+    if (!nom || !contact) return alert('Veuillez remplir votre nom et contact.');
+    db.collection('commandes').doc(orderId).update({
+      status: 'en_cours',
+      livreur: nom,
+      livreurContact: contact,
+      livreurAdresse: adresse,
+      startedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(() => {
+      // Démarrer le partage de position si pas déjà actif
+      if (!state.livreurWatchId && navigator.geolocation) {
+        const watchId = navigator.geolocation.watchPosition(
+          pos => {
+            const geoPoint = new firebase.firestore.GeoPoint(pos.coords.latitude, pos.coords.longitude);
+            // Mettre à jour toutes les commandes en cours de ce livreur
+            db.collection('commandes').where('livreur', '==', nom).where('status', '==', 'en_cours').get()
+              .then(snapshot => {
+                snapshot.forEach(doc => doc.ref.update({ livreurPosition: geoPoint }));
+              });
+          },
+          err => console.error(err),
+          { enableHighAccuracy: true, maximumAge: 5000 }
+        );
+        state.livreurWatchId = watchId;
+      }
+    });
+  }
+
+  function loadLivreurEncours() {
+    const encoursContainer = document.getElementById('encoursList');
+    if (!encoursContainer) return;
+    const nom = document.getElementById('livreurName').value.trim();
+    if (!nom) return;
+    db.collection('commandes').where('livreur', '==', nom).where('status', '==', 'en_cours').onSnapshot(snap => {
+      let html = '';
+      if (snap.empty) html = '<p>Vous n’avez pas de livraison en cours.</p>';
+      else {
+        snap.forEach(doc => {
+          const d = doc.data();
+          html += `<div class="order-item" style="display:flex; justify-content:space-between; align-items:center;">
+            <span>${d.product} - ${d.client} (${d.pickupName})</span>
+            <button class="validate-btn" data-id="${doc.id}">✅ Valider livraison</button>
+          </div>`;
+        });
+      }
+      encoursContainer.innerHTML = html;
+      document.querySelectorAll('#encoursList .validate-btn').forEach(btn => {
+        btn.addEventListener('click', () => validerLivraison(btn.dataset.id));
+      });
+    });
+  }
+
+  function validerLivraison(orderId) {
+    if (confirm('Confirmer la livraison ?')) {
+      db.collection('commandes').doc(orderId).update({
+        status: 'livré',
+        deliveredAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
     }
   }
+
+  function startLivreurSession() {
+    const nom = document.getElementById('livreurName').value.trim();
+    const contact = document.getElementById('livreurContact').value.trim();
+    if (!nom || !contact) return alert('Remplissez nom et contact.');
+    document.getElementById('livreurPanel').classList.remove('hidden');
+    state.currentLivreurName = nom;
+    loadLivreurDisponibles();
+    loadLivreurEncours();
+  }
+
+  function stopLivreurSession() {
+    if (state.livreurWatchId) {
+      navigator.geolocation.clearWatch(state.livreurWatchId);
+      state.livreurWatchId = null;
+    }
+    document.getElementById('livreurPanel').classList.add('hidden');
+    // Nettoyer les écouteurs Firestore du livreur
+    if (livreurUnsubscribe) {
+      livreurUnsubscribe();
+      livreurUnsubscribe = null;
+    }
+  }
+  // =============================================
 
   // Navigation
   function showView(view) {
@@ -534,6 +601,11 @@
     document.querySelector(`.nav-item[data-view="${view}"]`)?.classList.add('active');
 
     if (view !== 'admin') stopAdminView();
+    if (view !== 'livreur') stopLivreurSession();
+    else {
+      // Réinitialiser l'affichage du panneau livreur si on revient
+      document.getElementById('livreurPanel').classList.add('hidden');
+    }
     if (view === 'admin') {
       initAdminView();
       setTimeout(() => adminMap?.invalidateSize(), 200);
@@ -545,16 +617,11 @@
     if (view === 'history') loadHistory();
   }
 
-  // Attacher les événements de navigation
   document.querySelectorAll('.nav-item').forEach(item => {
-    item.addEventListener('click', (e) => {
-      const view = item.dataset.view;
-      if (view) showView(view);
-    });
+    item.addEventListener('click', (e) => showView(item.dataset.view));
   });
   document.getElementById('backToHistoryBtn')?.addEventListener('click', () => showView('history'));
 
-  // Boutons carte
   document.getElementById('selectClientBtn')?.addEventListener('click', () => {
     selectedMarkerMode='client';
     document.getElementById('selectClientBtn').classList.add('active');
@@ -567,14 +634,14 @@
   });
   document.getElementById('gpsCenterBtn')?.addEventListener('click', useGPSForSelectedMarker);
 
-  // Initialisation
+  document.getElementById('startLivreurSession').addEventListener('click', startLivreurSession);
+
   document.getElementById('productDescription').value = state.product;
   initMainMap();
   showView('order');
   loadHistory();
   updateNearbyStats();
 
-  // Service Worker
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register("data:application/javascript," + encodeURIComponent("self.addEventListener('fetch', e => { e.respondWith(fetch(e.request).catch(() => caches.match(e.request))); }); self.addEventListener('install', () => self.skipWaiting());"));
   }
