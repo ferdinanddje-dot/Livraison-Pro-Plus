@@ -63,7 +63,7 @@
       <div class="section-title">👤 Client</div>
       <div class="input-group"><label>Nom complet</label><input type="text" id="clientName" placeholder="Votre nom complet" value="Jean Kouadio"></div>
       <div class="input-group"><label>Contact</label><input type="tel" id="clientContact" placeholder="Ex: 07 00 00 00 00"></div>
-      <div class="input-group"><label>Adresse</label><input type="text" id="clientAddress" placeholder="Quartier, rue, repère" value="Cocody, rue des Jardins"></div>
+      <div class="input-group"><label>Adresse</label><input type="text" id="clientAddress" placeholder="Quartier, rue, repère" value="Dioulabougou, près de la mosquée"></div>
     </div>
 
     <div class="card">
@@ -73,13 +73,13 @@
 
     <div class="card">
       <div class="section-title">🏢 Point de collecte</div>
-      <div class="input-group"><label>Nom structure</label><input type="text" id="pickupName" placeholder="Pharmacie Centrale" value="Pharmacie du Plateau"></div>
+      <div class="input-group"><label>Nom structure</label><input type="text" id="pickupName" placeholder="Pharmacie Centrale" value="Pharmacie du Centre"></div>
       <div class="input-group"><label>Contact structure</label><input type="tel" id="pickupContact" placeholder="Ex: 05 05 05 05 05"></div>
-      <div class="input-group"><label>Adresse</label><input type="text" id="pickupAddress" placeholder="Quartier, rue, repère" value="Plateau, Avenue de la République"></div>
+      <div class="input-group"><label>Adresse</label><input type="text" id="pickupAddress" placeholder="Quartier, rue, repère" value="Quartier Habitat, Avenue de la Paix"></div>
     </div>
 
     <div class="card">
-      <div class="section-title">📍 Carte</div>
+      <div class="section-title">📍 Carte (Yamoussoukro)</div>
       <div class="map-buttons">
         <button class="map-btn active" id="selectClientBtn">🙋‍♂️ Moi</button>
         <button class="map-btn" id="selectPickupBtn">🏢 Collecte</button>
@@ -170,15 +170,16 @@
   const db = firebase.firestore();
   // ========================================================================
 
+  // Coordonnées par défaut centrées sur Yamoussoukro (quartiers visibles avec zoom 15)
   const state = {
-    clientLocation: { lat: 5.3600, lng: -4.0083 },
-    pickupLocation: { lat: 5.3450, lng: -4.0240 },
+    clientLocation: { lat: 6.8206, lng: -5.2767 },   // Centre-ville Yamoussoukro
+    pickupLocation: { lat: 6.8150, lng: -5.2700 },
     clientName: 'Jean Kouadio',
     clientContact: '',
-    clientAddress: 'Cocody, rue des Jardins',
-    pickupName: 'Pharmacie du Plateau',
+    clientAddress: 'Dioulabougou, près de la mosquée',
+    pickupName: 'Pharmacie du Centre',
     pickupContact: '',
-    pickupAddress: 'Plateau, Avenue de la République',
+    pickupAddress: 'Quartier Habitat, Avenue de la Paix',
     product: 'Paracétamol 500mg',
     currentTrackingId: null,
     livreurWatchId: null
@@ -191,7 +192,8 @@
 
   function initMainMap() {
     if (mainMap) return;
-    mainMap = L.map('map', { center: [state.clientLocation.lat, state.clientLocation.lng], zoom: 14, zoomControl: false, attributionControl: false });
+    // Zoom 15 pour bien voir les quartiers de Yamoussoukro
+    mainMap = L.map('map', { center: [state.clientLocation.lat, state.clientLocation.lng], zoom: 15, zoomControl: false, attributionControl: false });
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(mainMap);
     const clientIcon = L.divIcon({ html: '<div style="background:#0a7e8c; width:22px; height:22px; border-radius:50%; border:2px solid white;"></div>', className: '', iconSize: [22,22], iconAnchor: [11,11] });
     const pickupIcon = L.divIcon({ html: '<div style="background:#e67e22; width:22px; height:22px; border-radius:50%; border:2px solid white;"></div>', className: '', iconSize: [22,22], iconAnchor: [11,11] });
@@ -306,7 +308,7 @@
 
   function initTrackingMap() {
     if (trackingMap) return;
-    trackingMap = L.map('trackingMap', { center: [state.pickupLocation.lat, state.pickupLocation.lng], zoom: 14, zoomControl: false, attributionControl: false });
+    trackingMap = L.map('trackingMap', { center: [state.pickupLocation.lat, state.pickupLocation.lng], zoom: 15, zoomControl: false, attributionControl: false });
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(trackingMap);
     const livreurIcon = L.divIcon({ html: '<div style="background:#e63946; width:26px; height:26px; border-radius:50%; border:2px solid white; font-size:14px; line-height:24px; text-align:center;">🛵</div>', className: '', iconSize: [26,26], iconAnchor: [13,13] });
     trackingMarker = L.marker([state.pickupLocation.lat, state.pickupLocation.lng], { icon: livreurIcon }).addTo(trackingMap);
@@ -320,7 +322,8 @@
     db.collection('commandes').doc(orderId).onSnapshot(doc => {
       if (!doc.exists) return;
       const data = doc.data();
-      document.getElementById('trackingLivreur').textContent = data.livreur || 'Inconnu';
+      const livreurText = data.livreurContact ? `${data.livreur || 'Inconnu'} (${data.livreurContact})` : (data.livreur || 'Inconnu');
+      document.getElementById('trackingLivreur').textContent = livreurText;
       document.getElementById('trackingProduct').textContent = data.product;
       if (data.status === 'livré') {
         document.getElementById('trackingStatus').textContent = '✅ Livraison effectuée !';
@@ -370,7 +373,8 @@
         if (d.status === 'livré' && dateLivraison) {
           livraisonStr = ` | Livré à ${dateLivraison.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'})}`;
         }
-        html += `<div class="history-item" data-id="${doc.id}"><strong>${dateStr}</strong> - ${d.product} | ${d.livreur || 'N/A'} | ${d.price} FCFA${livraisonStr}<br><small>📍 ${d.clientAddress || ''}</small></div>`;
+        const livreurDisplay = d.livreurContact ? `${d.livreur || 'N/A'} (${d.livreurContact})` : (d.livreur || 'N/A');
+        html += `<div class="history-item" data-id="${doc.id}"><strong>${dateStr}</strong> - ${d.product} | Livreur: ${livreurDisplay} | ${d.price} FCFA${livraisonStr}<br><small>📍 ${d.clientAddress || ''}</small></div>`;
       });
       container.innerHTML = html || '<p style="font-size:0.8rem;">Aucune commande.</p>';
       document.querySelectorAll('.history-item').forEach(item => {
@@ -391,7 +395,8 @@
 
   function initAdminMap() {
     if (adminMap) return;
-    adminMap = L.map('adminMap', { center: [5.36, -4.0], zoom: 12, zoomControl: false, attributionControl: false });
+    // Carte admin centrée sur Yamoussoukro
+    adminMap = L.map('adminMap', { center: [6.8206, -5.2767], zoom: 13, zoomControl: false, attributionControl: false });
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(adminMap);
     db.collection('commandes').where('status', '==', 'en_cours').onSnapshot(snapshot => {
       const currentIds = new Set();
