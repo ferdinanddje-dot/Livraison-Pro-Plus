@@ -35,16 +35,18 @@
     .price-badge { background:#0a7e8c; color:white; padding:4px 12px; border-radius:16px; font-weight:700; font-size:0.85rem; }
     .action-btn { background:#1a2b3c; border:none; color:white; padding:12px; border-radius:14px; font-weight:700; font-size:0.9rem; width:100%; cursor:pointer; transition:0.2s; margin-top:4px; }
     .action-btn:active { background:#0f1e2b; }
-    .history-list { display:flex; flex-direction:column; gap:8px; }
-    .history-item { background:#f9fafb; border-radius:14px; padding:10px 12px; border-left:4px solid #0a7e8c; font-size:0.8rem; cursor:pointer; }
-    .history-item:hover { background:#edf2f7; }
+    .history-list, .admin-list { display:flex; flex-direction:column; gap:8px; }
+    .history-item, .admin-item { background:#f9fafb; border-radius:14px; padding:10px 12px; border-left:4px solid #0a7e8c; font-size:0.8rem; cursor:pointer; }
+    .history-item:hover, .admin-item:hover { background:#edf2f7; }
+    .admin-item.livred { background:#e6ffed; border-left-color:#28a745; }
     .footer-nav { display:flex; border-top:1px solid #edf2f7; background:white; flex-shrink:0; }
-    .nav-item { flex:1; padding:10px; text-align:center; font-weight:600; color:#718096; cursor:pointer; transition:0.2s; font-size:0.75rem; }
-    .nav-item.active { color:#0a7e8c; border-top:3px solid #0a7e8c; background:#f4fafb; }
+    .nav-item { flex:1; padding:10px 4px; text-align:center; font-weight:600; color:#718096; cursor:pointer; transition:all 0.2s; font-size:0.75rem; display:flex; flex-direction:column; align-items:center; gap:2px; border-top:3px solid transparent; }
+    .nav-item.active { color: white; background: #0a7e8c; border-top-color: #0b5e6b; font-weight: 700; }
     .hidden { display:none !important; }
     .tracking-info { background:#fff3cd; padding:8px; border-radius:10px; font-weight:600; color:#856404; font-size:0.8rem; }
     select { width:100%; padding:8px; border-radius:10px; border:1px solid #e2e8f0; margin-top:6px; font-size:0.8rem; }
     small { font-size:0.65rem; }
+    .delete-btn { background:#dc3545; color:white; border:none; padding:4px 10px; border-radius:8px; font-size:0.7rem; cursor:pointer; margin-left:8px; }
   </style>
 </head>
 <body>
@@ -114,13 +116,16 @@
     <button class="action-btn" id="backToHistoryBtn">📋 Retour historique</button>
   </div>
 
-  <!-- Vue Admin -->
+  <!-- Vue Admin / Suivi global -->
   <div class="main-content hidden" id="viewAdmin">
     <div class="section-title">🗺️ Suivi global</div>
     <div class="card">
-      <div class="map-container" id="adminMap" style="height:300px;"></div>
+      <div class="map-container" id="adminMap" style="height:250px;"></div>
       <p style="margin-top:6px; font-size:0.8rem;"><strong>Livreurs en déplacement :</strong> <span id="adminCount">0</span></p>
-      <button class="action-btn" id="refreshAdminBtn">🔄 Rafraîchir</button>
+    </div>
+    <div class="card">
+      <div class="section-title">📋 Détail des commandes</div>
+      <div class="admin-list" id="adminList"></div>
     </div>
   </div>
 
@@ -170,9 +175,8 @@
   const db = firebase.firestore();
   // ========================================================================
 
-  // Coordonnées par défaut centrées sur Yamoussoukro (quartiers visibles avec zoom 15)
   const state = {
-    clientLocation: { lat: 6.8206, lng: -5.2767 },   // Centre-ville Yamoussoukro
+    clientLocation: { lat: 6.8206, lng: -5.2767 },
     pickupLocation: { lat: 6.8150, lng: -5.2700 },
     clientName: 'Jean Kouadio',
     clientContact: '',
@@ -189,12 +193,22 @@
   let trackingMap, trackingMarker, trackingRouteLayer, clientTrackingMarker;
   let adminMap, adminMarkers = {};
   let selectedMarkerMode = 'client';
+  let adminUnsubscribe = null;
+
+  // Initialisation des cartes avec vérification de l'élément DOM
+  function safeInitMap(mapId, options) {
+    const el = document.getElementById(mapId);
+    if (!el) { console.error("Élément de carte introuvable:", mapId); return null; }
+    if (el._leaflet_id) return el._leaflet; // déjà initialisée
+    const map = L.map(mapId, options);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+    return map;
+  }
 
   function initMainMap() {
     if (mainMap) return;
-    // Zoom 15 pour bien voir les quartiers de Yamoussoukro
-    mainMap = L.map('map', { center: [state.clientLocation.lat, state.clientLocation.lng], zoom: 15, zoomControl: false, attributionControl: false });
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(mainMap);
+    mainMap = safeInitMap('map', { center: [state.clientLocation.lat, state.clientLocation.lng], zoom: 15, zoomControl: false, attributionControl: false });
+    if (!mainMap) return;
     const clientIcon = L.divIcon({ html: '<div style="background:#0a7e8c; width:22px; height:22px; border-radius:50%; border:2px solid white;"></div>', className: '', iconSize: [22,22], iconAnchor: [11,11] });
     const pickupIcon = L.divIcon({ html: '<div style="background:#e67e22; width:22px; height:22px; border-radius:50%; border:2px solid white;"></div>', className: '', iconSize: [22,22], iconAnchor: [11,11] });
     clientMarker = L.marker([state.clientLocation.lat, state.clientLocation.lng], { draggable: true, icon: clientIcon }).addTo(mainMap);
@@ -218,6 +232,7 @@
   }
 
   async function updateRouteMain() {
+    if (!mainMap || !clientMarker || !pickupMarker) return;
     if (routeLayer) mainMap.removeLayer(routeLayer);
     const url = `https://router.project-osrm.org/route/v1/driving/${state.clientLocation.lng},${state.clientLocation.lat};${state.pickupLocation.lng},${state.pickupLocation.lat}?geometries=geojson&overview=full`;
     try {
@@ -277,6 +292,23 @@
     );
   }
 
+  // Envoi WhatsApp
+  function sendWhatsAppMessage(orderData) {
+    const phone = "2250142931931"; // numéro au format international sans le +
+    const message = encodeURIComponent(
+      `🚀 Nouvelle commande Livraison Pro+\n` +
+      `👤 Client: ${orderData.client} (${orderData.clientContact})\n` +
+      `📍 Adresse client: ${orderData.clientAddress}\n` +
+      `🏢 Collecte: ${orderData.pickupName} (${orderData.pickupContact})\n` +
+      `📍 Adresse collecte: ${orderData.pickupAddress}\n` +
+      `📦 Produit: ${orderData.product}\n` +
+      `💰 Prix: ${orderData.price} FCFA\n` +
+      `📅 Date: ${new Date().toLocaleString('fr-FR')}`
+    );
+    const url = `https://wa.me/${phone}?text=${message}`;
+    window.open(url, '_blank');
+  }
+
   document.getElementById('submitOrderBtn').addEventListener('click', async () => {
     const nom = document.getElementById('clientName').value.trim();
     const contact = document.getElementById('clientContact').value.trim();
@@ -287,17 +319,20 @@
     const produit = document.getElementById('productDescription').value.trim();
     if (!nom || !contact || !structure || !produit) return alert('Champs obligatoires');
     const prix = parseInt(document.getElementById('deliveryPrice').textContent) || 500;
+    const orderData = {
+      client: nom, clientContact: contact, clientAddress: adresse,
+      product: produit,
+      clientLocation: new firebase.firestore.GeoPoint(state.clientLocation.lat, state.clientLocation.lng),
+      pickupLocation: new firebase.firestore.GeoPoint(state.pickupLocation.lat, state.pickupLocation.lng),
+      pickupName: structure, pickupContact: contactStruct, pickupAddress: adresseStruct,
+      price: prix, status: 'en_attente', livreur: 'En attente',
+      date: firebase.firestore.FieldValue.serverTimestamp()
+    };
     try {
-      const docRef = await db.collection('commandes').add({
-        client: nom, clientContact: contact, clientAddress: adresse,
-        product: produit,
-        clientLocation: new firebase.firestore.GeoPoint(state.clientLocation.lat, state.clientLocation.lng),
-        pickupLocation: new firebase.firestore.GeoPoint(state.pickupLocation.lat, state.pickupLocation.lng),
-        pickupName: structure, pickupContact: contactStruct, pickupAddress: adresseStruct,
-        price: prix, status: 'en_attente', livreur: 'En attente',
-        date: firebase.firestore.FieldValue.serverTimestamp()
-      });
+      const docRef = await db.collection('commandes').add(orderData);
       alert(`✅ Commande enregistrée !`);
+      // Envoyer WhatsApp
+      sendWhatsAppMessage({...orderData, clientLocation: state.clientLocation, pickupLocation: state.pickupLocation});
       loadHistory();
       updateNearbyStats();
       state.currentTrackingId = docRef.id;
@@ -308,8 +343,8 @@
 
   function initTrackingMap() {
     if (trackingMap) return;
-    trackingMap = L.map('trackingMap', { center: [state.pickupLocation.lat, state.pickupLocation.lng], zoom: 15, zoomControl: false, attributionControl: false });
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(trackingMap);
+    trackingMap = safeInitMap('trackingMap', { center: [state.pickupLocation.lat, state.pickupLocation.lng], zoom: 15, zoomControl: false, attributionControl: false });
+    if (!trackingMap) return;
     const livreurIcon = L.divIcon({ html: '<div style="background:#e63946; width:26px; height:26px; border-radius:50%; border:2px solid white; font-size:14px; line-height:24px; text-align:center;">🛵</div>', className: '', iconSize: [26,26], iconAnchor: [13,13] });
     trackingMarker = L.marker([state.pickupLocation.lat, state.pickupLocation.lng], { icon: livreurIcon }).addTo(trackingMap);
     const clientIcon = L.divIcon({ html: '<div style="background:#0a7e8c; width:18px; height:18px; border-radius:50%; border:2px solid white;"></div>', className: '', iconSize: [18,18], iconAnchor: [9,9] });
@@ -356,6 +391,7 @@
 
   async function loadHistory() {
     const container = document.getElementById('historyContainer');
+    if (!container) return;
     container.innerHTML = '<p style="font-size:0.8rem;">Chargement...</p>';
     try {
       const snapshot = await db.collection('commandes').orderBy('date', 'desc').limit(20).get();
@@ -393,92 +429,100 @@
     } catch(e) { container.innerHTML = '<p>Erreur.</p>'; }
   }
 
-  function initAdminMap() {
-    if (adminMap) return;
-    // Carte admin centrée sur Yamoussoukro
-    adminMap = L.map('adminMap', { center: [6.8206, -5.2767], zoom: 13, zoomControl: false, attributionControl: false });
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(adminMap);
-    db.collection('commandes').where('status', '==', 'en_cours').onSnapshot(snapshot => {
-      const currentIds = new Set();
-      snapshot.forEach(doc => currentIds.add(doc.id));
-      Object.keys(adminMarkers).forEach(id => { if (!currentIds.has(id)) { adminMap.removeLayer(adminMarkers[id]); delete adminMarkers[id]; } });
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        if (data.livreurPosition) {
-          const pos = data.livreurPosition;
-          if (adminMarkers[doc.id]) {
-            adminMarkers[doc.id].setLatLng([pos.latitude, pos.longitude]);
-          } else {
-            const icon = L.divIcon({ html: '<div style="background:#e63946; width:28px; height:28px; border-radius:50%; border:2px solid white; display:flex; align-items:center; justify-content:center;">🛵</div>', className: '', iconSize: [28,28], iconAnchor: [14,14] });
-            const marker = L.marker([pos.latitude, pos.longitude], { icon }).addTo(adminMap);
-            marker.bindTooltip(`${data.livreur || 'Livreur'} - ${data.product}`);
-            adminMarkers[doc.id] = marker;
+  function initAdminView() {
+    if (!adminMap) {
+      adminMap = safeInitMap('adminMap', { center: [6.8206, -5.2767], zoom: 13, zoomControl: false, attributionControl: false });
+    }
+    if (adminUnsubscribe) adminUnsubscribe();
+
+    adminUnsubscribe = db.collection('commandes')
+      .where('status', 'in', ['en_cours', 'livré'])
+      .onSnapshot(snapshot => {
+        const currentIds = new Set();
+        snapshot.forEach(doc => {
+          if (doc.data().status === 'en_cours') currentIds.add(doc.id);
+        });
+        Object.keys(adminMarkers).forEach(id => {
+          if (!currentIds.has(id)) {
+            adminMap.removeLayer(adminMarkers[id]);
+            delete adminMarkers[id];
           }
+        });
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          if (data.status === 'en_cours' && data.livreurPosition) {
+            const pos = data.livreurPosition;
+            if (adminMarkers[doc.id]) {
+              adminMarkers[doc.id].setLatLng([pos.latitude, pos.longitude]);
+            } else {
+              const icon = L.divIcon({ html: '<div style="background:#e63946; width:28px; height:28px; border-radius:50%; border:2px solid white; display:flex; align-items:center; justify-content:center;">🛵</div>', className: '', iconSize: [28,28], iconAnchor: [14,14] });
+              const marker = L.marker([pos.latitude, pos.longitude], { icon }).addTo(adminMap);
+              marker.bindTooltip(`${data.livreur || 'Livreur'} - ${data.product}`);
+              adminMarkers[doc.id] = marker;
+            }
+          }
+        });
+        document.getElementById('adminCount').textContent = Object.keys(adminMarkers).length;
+
+        const listContainer = document.getElementById('adminList');
+        if (!listContainer) return;
+        let html = '';
+        if (snapshot.empty) {
+          html = '<p style="font-size:0.8rem;">Aucune commande en cours ou livrée.</p>';
+        } else {
+          const docs = [];
+          snapshot.forEach(doc => docs.push({ id: doc.id, data: doc.data() }));
+          docs.sort((a, b) => (b.data.date?.toMillis() || 0) - (a.data.date?.toMillis() || 0));
+
+          docs.forEach(({ id, data }) => {
+            const dateCommande = data.date ? data.date.toDate() : null;
+            const startedAt = data.startedAt ? data.startedAt.toDate() : null;
+            const isLivred = data.status === 'livré';
+            const livreurDisplay = data.livreurContact ? `${data.livreur || 'N/A'} (${data.livreurContact})` : (data.livreur || 'N/A');
+
+            let dateStr = 'Date inconnue';
+            if (dateCommande) {
+              const options = { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' };
+              dateStr = dateCommande.toLocaleDateString('fr-FR', options);
+            }
+            let collectStr = '';
+            if (startedAt) {
+              const options = { hour: '2-digit', minute: '2-digit' };
+              collectStr = `Collecté à ${startedAt.toLocaleTimeString('fr-FR', options)}`;
+            } else if (isLivred) {
+              collectStr = 'Heure de collecte non disponible';
+            }
+
+            html += `<div class="admin-item ${isLivred ? 'livred' : ''}" data-id="${id}">
+              <strong>${livreurDisplay}</strong> - ${data.product}<br>
+              <small>📋 Commande: ${dateStr}</small><br>
+              <small>📦 ${collectStr}</small>
+              ${isLivred ? `<button class="delete-btn" data-id="${id}">🗑 Supprimer</button>` : ''}
+            </div>`;
+          });
         }
+        listContainer.innerHTML = html;
+
+        document.querySelectorAll('.delete-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const id = btn.dataset.id;
+            if (confirm('Supprimer définitivement cette livraison ?')) {
+              db.collection('commandes').doc(id).delete().catch(err => alert('Erreur de suppression: ' + err.message));
+            }
+          });
+        });
       });
-      document.getElementById('adminCount').textContent = Object.keys(adminMarkers).length;
-    });
   }
 
-  document.getElementById('refreshAdminBtn').addEventListener('click', () => adminMap?.invalidateSize());
+  function stopAdminView() {
+    if (adminUnsubscribe) {
+      adminUnsubscribe();
+      adminUnsubscribe = null;
+    }
+  }
 
-  document.getElementById('startLivreurSession').addEventListener('click', async () => {
-    const nom = document.getElementById('livreurName').value.trim();
-    const contact = document.getElementById('livreurContact').value.trim();
-    if (!nom || !contact) return alert('Remplissez nom et contact.');
-    document.getElementById('livreurActive').classList.remove('hidden');
-    const select = document.getElementById('orderSelect');
-    select.innerHTML = '';
-    const snapshot = await db.collection('commandes').where('status', '==', 'en_attente').get();
-    snapshot.forEach(doc => {
-      const d = doc.data();
-      const option = document.createElement('option');
-      option.value = doc.id;
-      option.textContent = `${d.product} - ${d.client} (${d.pickupName})`;
-      select.appendChild(option);
-    });
-  });
-
-  document.getElementById('startDeliveryBtn').addEventListener('click', async () => {
-    const orderId = document.getElementById('orderSelect').value;
-    if (!orderId) return alert('Sélectionnez une commande');
-    const livreurName = document.getElementById('livreurName').value.trim();
-    const livreurContact = document.getElementById('livreurContact').value.trim();
-    const livreurAdresse = document.getElementById('livreurAdresse').value.trim();
-    try {
-      await db.collection('commandes').doc(orderId).update({
-        status: 'en_cours', livreur: livreurName, livreurContact, livreurAdresse
-      });
-      document.getElementById('livraisonEnCours').classList.remove('hidden');
-      if (navigator.geolocation) {
-        const watchId = navigator.geolocation.watchPosition(
-          pos => {
-            db.collection('commandes').doc(orderId).update({
-              livreurPosition: new firebase.firestore.GeoPoint(pos.coords.latitude, pos.coords.longitude)
-            });
-          },
-          err => console.error(err),
-          { enableHighAccuracy: true, maximumAge: 5000 }
-        );
-        state.livreurWatchId = watchId;
-      }
-      alert('Livraison démarrée !');
-    } catch(e) { alert('Erreur'); }
-  });
-
-  document.getElementById('finishDeliveryBtn').addEventListener('click', async () => {
-    const orderId = document.getElementById('orderSelect').value;
-    if (state.livreurWatchId) { navigator.geolocation.clearWatch(state.livreurWatchId); state.livreurWatchId = null; }
-    try {
-      await db.collection('commandes').doc(orderId).update({
-        status: 'livré', deliveredAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      alert('Livraison terminée.');
-      document.getElementById('livraisonEnCours').classList.add('hidden');
-      document.getElementById('livreurActive').classList.add('hidden');
-    } catch(e) { alert('Erreur'); }
-  });
-
+  // Navigation
   function showView(view) {
     document.querySelectorAll('.main-content').forEach(el => el.classList.add('hidden'));
     document.getElementById('viewOrder').classList.toggle('hidden', view !== 'order');
@@ -488,24 +532,49 @@
     document.getElementById('viewLivreur').classList.toggle('hidden', view !== 'livreur');
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     document.querySelector(`.nav-item[data-view="${view}"]`)?.classList.add('active');
-    setTimeout(() => { mainMap?.invalidateSize(); trackingMap?.invalidateSize(); adminMap?.invalidateSize(); }, 100);
+
+    if (view !== 'admin') stopAdminView();
+    if (view === 'admin') {
+      initAdminView();
+      setTimeout(() => adminMap?.invalidateSize(), 200);
+    } else if (view === 'order') {
+      setTimeout(() => mainMap?.invalidateSize(), 200);
+    } else if (view === 'tracking') {
+      setTimeout(() => trackingMap?.invalidateSize(), 200);
+    }
     if (view === 'history') loadHistory();
-    if (view === 'admin') initAdminMap();
   }
 
-  document.querySelectorAll('.nav-item').forEach(item => item.addEventListener('click', () => showView(item.dataset.view)));
-  document.getElementById('backToHistoryBtn').addEventListener('click', () => showView('history'));
+  // Attacher les événements de navigation
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', (e) => {
+      const view = item.dataset.view;
+      if (view) showView(view);
+    });
+  });
+  document.getElementById('backToHistoryBtn')?.addEventListener('click', () => showView('history'));
 
-  document.getElementById('selectClientBtn').onclick = () => { selectedMarkerMode='client'; selectClientBtn.classList.add('active'); selectPickupBtn.classList.remove('active'); };
-  document.getElementById('selectPickupBtn').onclick = () => { selectedMarkerMode='pickup'; selectPickupBtn.classList.add('active'); selectClientBtn.classList.remove('active'); };
-  document.getElementById('gpsCenterBtn').onclick = useGPSForSelectedMarker;
+  // Boutons carte
+  document.getElementById('selectClientBtn')?.addEventListener('click', () => {
+    selectedMarkerMode='client';
+    document.getElementById('selectClientBtn').classList.add('active');
+    document.getElementById('selectPickupBtn').classList.remove('active');
+  });
+  document.getElementById('selectPickupBtn')?.addEventListener('click', () => {
+    selectedMarkerMode='pickup';
+    document.getElementById('selectPickupBtn').classList.add('active');
+    document.getElementById('selectClientBtn').classList.remove('active');
+  });
+  document.getElementById('gpsCenterBtn')?.addEventListener('click', useGPSForSelectedMarker);
 
+  // Initialisation
   document.getElementById('productDescription').value = state.product;
   initMainMap();
   showView('order');
   loadHistory();
   updateNearbyStats();
 
+  // Service Worker
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register("data:application/javascript," + encodeURIComponent("self.addEventListener('fetch', e => { e.respondWith(fetch(e.request).catch(() => caches.match(e.request))); }); self.addEventListener('install', () => self.skipWaiting());"));
   }
