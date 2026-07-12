@@ -6,43 +6,45 @@
   <meta name="theme-color" content="#0a7e8c">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="description" content="Livraison Pro+ - Service de livraison rapide avec suivi en direct">
+  <meta name="description" content="Livraison Pro+ - Suivi GPS en direct">
   <title>Livraison Pro+</title>
   <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Livraison%20Pro%2B%22%2C%22short_name%22%3A%22Livraison%2B%22%2C%22start_url%22%3A%22.%2F%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23ffffff%22%2C%22theme_color%22%3A%22%230a7e8c%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%20100%20100'%3E%3Ccircle%20cx%3D'50'%20cy%3D'50'%20r%3D'48'%20fill%3D'%230a7e8c'%2F%3E%3Cpath%20d%3D'M30%2040h40l-10%2030h-20z'%20fill%3D'white'%2F%3E%3C%2Fsvg%3E%22%2C%22sizes%22%3A%22100x100%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', system-ui, sans-serif; }
-    body { background:#f4f8fb; display:flex; justify-content:center; align-items:center; min-height:100vh; margin:0; padding:16px; }
-    .app-container { max-width:500px; width:100%; background:white; border-radius:32px; box-shadow:0 20px 40px rgba(0,0,0,0.08); overflow:hidden; display:flex; flex-direction:column; height:92vh; max-height:900px; }
-    .header { background:linear-gradient(135deg,#0a7e8c,#0b5e6b); color:white; padding:16px 20px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; gap:10px; }
-    .logo { display:flex; align-items:center; gap:8px; }
-    .logo-icon { background:white; color:#0a7e8c; width:40px; height:40px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:bold; }
-    .logo h1 { font-size:1.4rem; font-weight:700; letter-spacing:-0.5px; line-height:1.2; }
-    .badge { background:rgba(255,255,255,0.2); padding:6px 12px; border-radius:20px; font-size:0.8rem; font-weight:600; }
-    .main-content { flex:1; overflow-y:auto; padding:16px 20px; display:flex; flex-direction:column; gap:16px; }
-    .section-title { font-size:1.05rem; font-weight:700; color:#1a2b3c; display:flex; align-items:center; gap:8px; margin-bottom:4px; }
-    .card { background:#fff; border-radius:20px; padding:16px; box-shadow:0 6px 18px rgba(0,0,0,0.04); border:1px solid #edf2f7; }
-    .input-group { margin-bottom:12px; }
-    .input-group label { display:block; font-size:0.8rem; font-weight:600; color:#4a5568; margin-bottom:4px; }
-    .input-group input { width:100%; padding:11px 12px; border:1.5px solid #e2e8f0; border-radius:14px; font-size:0.9rem; transition:all 0.2s; background:#f9fafb; }
+    body { background:#f4f8fb; display:flex; justify-content:center; align-items:center; min-height:100vh; margin:0; padding:8px; }
+    .app-container { max-width:480px; width:100%; background:white; border-radius:24px; box-shadow:0 10px 25px rgba(0,0,0,0.08); overflow:hidden; display:flex; flex-direction:column; height:100vh; max-height:780px; }
+    .header { background:linear-gradient(135deg,#0a7e8c,#0b5e6b); color:white; padding:12px 16px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; gap:8px; }
+    .logo { display:flex; align-items:center; gap:6px; }
+    .logo-icon { background:white; color:#0a7e8c; width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:bold; }
+    .logo h1 { font-size:1.2rem; font-weight:700; letter-spacing:-0.5px; }
+    .badge { background:rgba(255,255,255,0.2); padding:4px 10px; border-radius:16px; font-size:0.7rem; font-weight:600; }
+    .main-content { flex:1; overflow-y:auto; padding:10px 12px; display:flex; flex-direction:column; gap:8px; }
+    .section-title { font-size:0.95rem; font-weight:700; color:#1a2b3c; display:flex; align-items:center; gap:6px; margin-bottom:2px; }
+    .card { background:#fff; border-radius:16px; padding:12px; box-shadow:0 4px 12px rgba(0,0,0,0.03); border:1px solid #edf2f7; }
+    .input-group { margin-bottom:8px; }
+    .input-group label { display:block; font-size:0.7rem; font-weight:600; color:#4a5568; margin-bottom:2px; }
+    .input-group input { width:100%; padding:9px 10px; border:1.5px solid #e2e8f0; border-radius:12px; font-size:0.85rem; transition:all 0.2s; background:#f9fafb; }
     .input-group input:focus { outline:none; border-color:#0a7e8c; background:white; box-shadow:0 0 0 3px rgba(10,126,140,0.1); }
-    .map-container { height:260px; border-radius:18px; overflow:hidden; border:1.5px solid #e2e8f0; margin-bottom:8px; }
-    .map-buttons { display:flex; gap:8px; margin-bottom:4px; }
-    .map-btn { flex:1; background:#f0f9fa; border:1px solid #cde5e9; border-radius:12px; padding:10px; font-weight:600; font-size:0.8rem; color:#0a5e6b; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px; }
+    .map-container { height:180px; border-radius:14px; overflow:hidden; border:1.5px solid #e2e8f0; margin-bottom:6px; }
+    .map-buttons { display:flex; gap:6px; margin-bottom:4px; }
+    .map-btn { flex:1; background:#f0f9fa; border:1px solid #cde5e9; border-radius:10px; padding:8px; font-weight:600; font-size:0.7rem; color:#0a5e6b; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:3px; }
     .map-btn.active { background:#0a7e8c; color:white; border-color:#0a7e8c; }
-    .radius-info { background:#e8f4f6; border-radius:14px; padding:10px 14px; display:flex; align-items:center; justify-content:space-between; margin:8px 0; font-size:0.9rem; }
-    .command-count { font-weight:700; font-size:1.1rem; color:#0a7e8c; }
-    .price-badge { background:#0a7e8c; color:white; padding:6px 14px; border-radius:20px; font-weight:700; font-size:0.95rem; }
-    .action-btn { background:#1a2b3c; border:none; color:white; padding:15px; border-radius:18px; font-weight:700; font-size:1rem; width:100%; cursor:pointer; transition:0.2s; margin-top:4px; }
+    .radius-info { background:#e8f4f6; border-radius:12px; padding:8px 12px; display:flex; align-items:center; justify-content:space-between; margin:4px 0; font-size:0.8rem; }
+    .command-count { font-weight:700; font-size:1rem; color:#0a7e8c; }
+    .price-badge { background:#0a7e8c; color:white; padding:4px 12px; border-radius:16px; font-weight:700; font-size:0.85rem; }
+    .action-btn { background:#1a2b3c; border:none; color:white; padding:12px; border-radius:14px; font-weight:700; font-size:0.9rem; width:100%; cursor:pointer; transition:0.2s; margin-top:4px; }
     .action-btn:active { background:#0f1e2b; }
-    .history-list { display:flex; flex-direction:column; gap:10px; }
-    .history-item { background:#f9fafb; border-radius:16px; padding:12px 14px; border-left:5px solid #0a7e8c; font-size:0.85rem; }
+    .history-list { display:flex; flex-direction:column; gap:8px; }
+    .history-item { background:#f9fafb; border-radius:14px; padding:10px 12px; border-left:4px solid #0a7e8c; font-size:0.8rem; cursor:pointer; }
+    .history-item:hover { background:#edf2f7; }
     .footer-nav { display:flex; border-top:1px solid #edf2f7; background:white; flex-shrink:0; }
-    .nav-item { flex:1; padding:14px; text-align:center; font-weight:600; color:#718096; cursor:pointer; transition:0.2s; font-size:0.85rem; }
+    .nav-item { flex:1; padding:10px; text-align:center; font-weight:600; color:#718096; cursor:pointer; transition:0.2s; font-size:0.75rem; }
     .nav-item.active { color:#0a7e8c; border-top:3px solid #0a7e8c; background:#f4fafb; }
     .hidden { display:none !important; }
-    .tracking-info { background:#fff3cd; padding:10px; border-radius:12px; font-weight:600; color:#856404; }
-    select { width:100%; padding:10px; border-radius:12px; border:1px solid #e2e8f0; margin-top:8px; }
+    .tracking-info { background:#fff3cd; padding:8px; border-radius:10px; font-weight:600; color:#856404; font-size:0.8rem; }
+    select { width:100%; padding:8px; border-radius:10px; border:1px solid #e2e8f0; margin-top:6px; font-size:0.8rem; }
+    small { font-size:0.65rem; }
   </style>
 </head>
 <body>
@@ -57,89 +59,96 @@
 
   <!-- Vue Commande Client -->
   <div class="main-content" id="viewOrder">
-    <!-- Client -->
     <div class="card">
       <div class="section-title">👤 Client</div>
       <div class="input-group"><label>Nom complet</label><input type="text" id="clientName" placeholder="Votre nom complet" value="Jean Kouadio"></div>
-      <div class="input-group"><label>Contact</label><input type="tel" id="clientContact" placeholder="+225 07..." value="+225 0708090100"></div>
-      <div class="input-group"><label>Situation géographique (quartier, rue, repère)</label><input type="text" id="clientAddress" placeholder="Ex: Cocody, rue des Jardins, près de la pharmacie" value="Cocody, rue des Jardins"></div>
+      <div class="input-group"><label>Contact</label><input type="tel" id="clientContact" placeholder="Ex: 07 00 00 00 00"></div>
+      <div class="input-group"><label>Adresse</label><input type="text" id="clientAddress" placeholder="Quartier, rue, repère" value="Cocody, rue des Jardins"></div>
     </div>
 
-    <!-- Point de collecte -->
-    <div class="card">
-      <div class="section-title">🏢 Point de collecte</div>
-      <div class="input-group"><label>Nom structure</label><input type="text" id="pickupName" placeholder="Ex: Pharmacie Centrale" value="Pharmacie du Plateau"></div>
-      <div class="input-group"><label>Contact structure</label><input type="tel" id="pickupContact" placeholder="Contact" value="+225 0505050505"></div>
-      <div class="input-group"><label>Situation géographique (quartier, rue, repère)</label><input type="text" id="pickupAddress" placeholder="Ex: Plateau, Avenue de la République" value="Plateau, Avenue de la République"></div>
-    </div>
-
-    <!-- Carte -->
-    <div class="card">
-      <div class="section-title">📍 Emplacements sur la carte</div>
-      <div class="map-buttons">
-        <button class="map-btn active" id="selectClientBtn">🙋‍♂️ Ma position</button>
-        <button class="map-btn" id="selectPickupBtn">🏢 Point collecte</button>
-        <button class="map-btn" id="gpsCenterBtn">📍 GPS auto</button>
-      </div>
-      <div class="map-container" id="map"></div>
-      <small style="color:#718096;">Sélectionnez un mode, puis cliquez sur la carte ou utilisez le GPS automatique.</small>
-    </div>
-
-    <!-- Produit -->
     <div class="card">
       <div class="section-title">📋 Produit désiré</div>
       <div class="input-group"><label>Description</label><input type="text" id="productDescription" placeholder="Médicament, repas..."></div>
     </div>
 
-    <!-- Stats -->
-    <div class="radius-info"><span>📊 Commandes dans rayon 5km :</span><span class="command-count" id="nearbyCount">...</span></div>
-    <div class="radius-info" style="justify-content:space-between;"><span>💰 Tarif livraison :</span><span class="price-badge" id="deliveryPrice">-- FCFA</span></div>
-    <button class="action-btn" id="submitOrderBtn">🚀 Commander la livraison</button>
-    <p style="font-size:0.7rem; color:#718096; text-align:center; margin-top:4px;">*300 FCFA si ≥10 commandes groupées dans 5km</p>
+    <div class="card">
+      <div class="section-title">🏢 Point de collecte</div>
+      <div class="input-group"><label>Nom structure</label><input type="text" id="pickupName" placeholder="Pharmacie Centrale" value="Pharmacie du Plateau"></div>
+      <div class="input-group"><label>Contact structure</label><input type="tel" id="pickupContact" placeholder="Ex: 05 05 05 05 05"></div>
+      <div class="input-group"><label>Adresse</label><input type="text" id="pickupAddress" placeholder="Quartier, rue, repère" value="Plateau, Avenue de la République"></div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">📍 Carte</div>
+      <div class="map-buttons">
+        <button class="map-btn active" id="selectClientBtn">🙋‍♂️ Moi</button>
+        <button class="map-btn" id="selectPickupBtn">🏢 Collecte</button>
+        <button class="map-btn" id="gpsCenterBtn">📍 GPS</button>
+      </div>
+      <div class="map-container" id="map"></div>
+      <small style="color:#718096;">Cliquez sur la carte après sélection.</small>
+    </div>
+
+    <div class="radius-info"><span>📊 Rayon 5km :</span><span class="command-count" id="nearbyCount">...</span></div>
+    <div class="radius-info" style="justify-content:space-between;"><span>💰 Tarif :</span><span class="price-badge" id="deliveryPrice">-- FCFA</span></div>
+    <button class="action-btn" id="submitOrderBtn">🚀 Commander</button>
+    <p style="font-size:0.65rem; color:#718096; text-align:center; margin-top:2px;">*300 FCFA si ≥10 commandes dans 5km</p>
   </div>
 
   <!-- Vue Historique -->
   <div class="main-content hidden" id="viewHistory">
-    <div class="section-title">📜 Historique des livraisons</div>
+    <div class="section-title">📜 Historique</div>
     <div class="history-list" id="historyContainer"></div>
   </div>
 
   <!-- Vue Suivi Client -->
   <div class="main-content hidden" id="viewTracking">
-    <div class="section-title">🛵 Suivi en direct</div>
+    <div class="section-title">🛵 Suivi commande</div>
     <div class="card">
       <div class="tracking-info" id="trackingStatus">En attente du livreur...</div>
-      <div class="map-container" id="trackingMap" style="height:300px;"></div>
-      <p><strong>Livreur :</strong> <span id="trackingLivreur"></span></p>
-      <p><strong>Produit :</strong> <span id="trackingProduct"></span></p>
-      <p><strong>Temps estimé :</strong> <span id="trackingTime">--</span></p>
+      <div class="map-container" id="trackingMap" style="height:250px;"></div>
+      <p style="font-size:0.8rem;"><strong>Livreur :</strong> <span id="trackingLivreur"></span></p>
+      <p style="font-size:0.8rem;"><strong>Produit :</strong> <span id="trackingProduct"></span></p>
+      <p style="font-size:0.8rem;"><strong>Temps estimé :</strong> <span id="trackingTime">--</span></p>
     </div>
     <button class="action-btn" id="backToHistoryBtn">📋 Retour historique</button>
+  </div>
+
+  <!-- Vue Admin -->
+  <div class="main-content hidden" id="viewAdmin">
+    <div class="section-title">🗺️ Suivi global</div>
+    <div class="card">
+      <div class="map-container" id="adminMap" style="height:300px;"></div>
+      <p style="margin-top:6px; font-size:0.8rem;"><strong>Livreurs en déplacement :</strong> <span id="adminCount">0</span></p>
+      <button class="action-btn" id="refreshAdminBtn">🔄 Rafraîchir</button>
+    </div>
   </div>
 
   <!-- Vue Livreur -->
   <div class="main-content hidden" id="viewLivreur">
     <div class="section-title">🛵 Espace Livreur</div>
     <div class="card">
-      <div class="input-group"><label>Votre nom de livreur</label><input type="text" id="livreurName" placeholder="Ex: Koffi A." value="Koffi A."></div>
+      <div class="input-group"><label>Nom et Prénoms</label><input type="text" id="livreurName" placeholder="Ex: Koffi A." value="Koffi A."></div>
+      <div class="input-group"><label>Contact</label><input type="tel" id="livreurContact" placeholder="Ex: 01 02 03 04 05"></div>
+      <div class="input-group"><label>Adresse actuelle</label><input type="text" id="livreurAdresse" placeholder="Où vous trouvez-vous ?"></div>
       <button class="action-btn" id="startLivreurSession">🔛 Démarrer ma session</button>
       <div id="livreurActive" class="hidden">
-        <hr style="margin:12px 0;">
-        <p>Commandes à livrer :</p>
-        <select id="orderSelect" size="4"></select>
-        <button class="action-btn" id="startDeliveryBtn" style="margin-top:8px;">🚀 Prendre cette commande</button>
+        <hr style="margin:8px 0;">
+        <p style="font-size:0.8rem;">Commandes à livrer :</p>
+        <select id="orderSelect" size="3"></select>
+        <button class="action-btn" id="startDeliveryBtn" style="margin-top:6px;">🚀 Prendre cette commande</button>
         <div id="livraisonEnCours" class="hidden">
-          <p style="margin-top:8px;">🔴 Livraison en cours... Position partagée automatiquement.</p>
-          <button class="action-btn" id="finishDeliveryBtn">✅ Livraison terminée</button>
+          <p style="margin-top:6px; font-size:0.8rem;">🔴 Livraison en cours... Position partagée.</p>
+          <button class="action-btn" id="finishDeliveryBtn">✅ Terminer</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Navigation -->
   <div class="footer-nav" id="footerNav">
     <div class="nav-item active" data-view="order">🛒 Commande</div>
     <div class="nav-item" data-view="history">📋 Historique</div>
+    <div class="nav-item" data-view="admin">🗺️ Suivi</div>
     <div class="nav-item" data-view="livreur">🛵 Livreur</div>
   </div>
 </div>
@@ -161,37 +170,35 @@
   const db = firebase.firestore();
   // ========================================================================
 
-  // État
   const state = {
     clientLocation: { lat: 5.3600, lng: -4.0083 },
     pickupLocation: { lat: 5.3450, lng: -4.0240 },
     clientName: 'Jean Kouadio',
-    clientContact: '+225 0708090100',
+    clientContact: '',
     clientAddress: 'Cocody, rue des Jardins',
     pickupName: 'Pharmacie du Plateau',
-    pickupContact: '+225 0505050505',
+    pickupContact: '',
     pickupAddress: 'Plateau, Avenue de la République',
     product: 'Paracétamol 500mg',
     currentTrackingId: null,
     livreurWatchId: null
   };
 
-  // Cartes
   let mainMap, clientMarker, pickupMarker, routeLayer;
   let trackingMap, trackingMarker, trackingRouteLayer, clientTrackingMarker;
-  let selectedMarkerMode = 'client'; // 'client' ou 'pickup'
+  let adminMap, adminMarkers = {};
+  let selectedMarkerMode = 'client';
 
-  // Initialisation carte principale
   function initMainMap() {
     if (mainMap) return;
     mainMap = L.map('map', { center: [state.clientLocation.lat, state.clientLocation.lng], zoom: 14, zoomControl: false, attributionControl: false });
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(mainMap);
-    const clientIcon = L.divIcon({ html: '<div style="background:#0a7e8c; width:24px; height:24px; border-radius:50%; border:2px solid white;"></div>', className: '', iconSize: [24,24], iconAnchor: [12,12] });
-    const pickupIcon = L.divIcon({ html: '<div style="background:#e67e22; width:24px; height:24px; border-radius:50%; border:2px solid white;"></div>', className: '', iconSize: [24,24], iconAnchor: [12,12] });
+    const clientIcon = L.divIcon({ html: '<div style="background:#0a7e8c; width:22px; height:22px; border-radius:50%; border:2px solid white;"></div>', className: '', iconSize: [22,22], iconAnchor: [11,11] });
+    const pickupIcon = L.divIcon({ html: '<div style="background:#e67e22; width:22px; height:22px; border-radius:50%; border:2px solid white;"></div>', className: '', iconSize: [22,22], iconAnchor: [11,11] });
     clientMarker = L.marker([state.clientLocation.lat, state.clientLocation.lng], { draggable: true, icon: clientIcon }).addTo(mainMap);
     pickupMarker = L.marker([state.pickupLocation.lat, state.pickupLocation.lng], { draggable: true, icon: pickupIcon }).addTo(mainMap);
     clientMarker.bindTooltip('Client', { permanent: true, direction: 'top' });
-    pickupMarker.bindTooltip('Point collecte', { permanent: true, direction: 'top' });
+    pickupMarker.bindTooltip('Collecte', { permanent: true, direction: 'top' });
     clientMarker.on('dragend', e => { state.clientLocation = e.target.getLatLng(); updateRouteMain(); updateNearbyStats(); });
     pickupMarker.on('dragend', e => { state.pickupLocation = e.target.getLatLng(); updateRouteMain(); });
     mainMap.on('click', e => {
@@ -216,15 +223,14 @@
       const data = await res.json();
       if (data.routes?.[0]) {
         const coords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
-        routeLayer = L.polyline(coords, { color: '#0a7e8c', weight: 5, opacity: 0.7 }).addTo(mainMap);
+        routeLayer = L.polyline(coords, { color: '#0a7e8c', weight: 4, opacity: 0.7 }).addTo(mainMap);
         mainMap.fitBounds(routeLayer.getBounds().pad(0.2));
       }
     } catch(e) {
-      routeLayer = L.polyline([[state.clientLocation.lat, state.clientLocation.lng], [state.pickupLocation.lat, state.pickupLocation.lng]], { color: '#e67e22', weight: 4, dashArray: '5,5' }).addTo(mainMap);
+      routeLayer = L.polyline([[state.clientLocation.lat, state.clientLocation.lng], [state.pickupLocation.lat, state.pickupLocation.lng]], { color: '#e67e22', weight: 3, dashArray: '5,5' }).addTo(mainMap);
     }
   }
 
-  // Statistiques de proximité
   async function updateNearbyStats() {
     const loc = state.clientLocation;
     try {
@@ -248,12 +254,8 @@
     return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
   }
 
-  // Fonction GPS automatique qui déplace le marqueur sélectionné
   function useGPSForSelectedMarker() {
-    if (!navigator.geolocation) {
-      alert("Géolocalisation non supportée");
-      return;
-    }
+    if (!navigator.geolocation) return alert("Géolocalisation non supportée");
     navigator.geolocation.getCurrentPosition(
       pos => {
         const latlng = { lat: pos.coords.latitude, lng: pos.coords.longitude };
@@ -268,12 +270,11 @@
         mainMap.setView(latlng, 16);
         updateRouteMain();
       },
-      err => alert('Erreur GPS : ' + err.message),
+      err => alert('Erreur GPS'),
       { enableHighAccuracy: true, timeout: 10000 }
     );
   }
 
-  // Soumission commande
   document.getElementById('submitOrderBtn').addEventListener('click', async () => {
     const nom = document.getElementById('clientName').value.trim();
     const contact = document.getElementById('clientContact').value.trim();
@@ -282,53 +283,39 @@
     const contactStruct = document.getElementById('pickupContact').value.trim();
     const adresseStruct = document.getElementById('pickupAddress').value.trim();
     const produit = document.getElementById('productDescription').value.trim();
-    if (!nom || !contact || !structure || !produit) {
-      alert('Veuillez remplir tous les champs obligatoires.');
-      return;
-    }
+    if (!nom || !contact || !structure || !produit) return alert('Champs obligatoires');
     const prix = parseInt(document.getElementById('deliveryPrice').textContent) || 500;
     try {
       const docRef = await db.collection('commandes').add({
-        client: nom,
-        clientContact: contact,
-        clientAddress: adresse,
+        client: nom, clientContact: contact, clientAddress: adresse,
         product: produit,
         clientLocation: new firebase.firestore.GeoPoint(state.clientLocation.lat, state.clientLocation.lng),
         pickupLocation: new firebase.firestore.GeoPoint(state.pickupLocation.lat, state.pickupLocation.lng),
-        pickupName: structure,
-        pickupContact: contactStruct,
-        pickupAddress: adresseStruct,
-        price: prix,
-        status: 'en_attente',
-        livreur: 'En attente',
+        pickupName: structure, pickupContact: contactStruct, pickupAddress: adresseStruct,
+        price: prix, status: 'en_attente', livreur: 'En attente',
         date: firebase.firestore.FieldValue.serverTimestamp()
       });
-      alert(`✅ Commande enregistrée !\nID: ${docRef.id}\nPrix: ${prix} FCFA`);
+      alert(`✅ Commande enregistrée !`);
       loadHistory();
       updateNearbyStats();
-      // Option suivi
       state.currentTrackingId = docRef.id;
       startTracking(docRef.id);
       showView('tracking');
-    } catch(e) {
-      alert('Erreur : ' + e.message);
-    }
+    } catch(e) { alert('Erreur : ' + e.message); }
   });
 
-  // Suivi client
   function initTrackingMap() {
     if (trackingMap) return;
     trackingMap = L.map('trackingMap', { center: [state.pickupLocation.lat, state.pickupLocation.lng], zoom: 14, zoomControl: false, attributionControl: false });
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(trackingMap);
-    const livreurIcon = L.divIcon({ html: '<div style="background:#e63946; width:28px; height:28px; border-radius:50%; border:3px solid white; font-size:16px; line-height:24px; text-align:center;">🛵</div>', className: '', iconSize: [28,28], iconAnchor: [14,14] });
+    const livreurIcon = L.divIcon({ html: '<div style="background:#e63946; width:26px; height:26px; border-radius:50%; border:2px solid white; font-size:14px; line-height:24px; text-align:center;">🛵</div>', className: '', iconSize: [26,26], iconAnchor: [13,13] });
     trackingMarker = L.marker([state.pickupLocation.lat, state.pickupLocation.lng], { icon: livreurIcon }).addTo(trackingMap);
-    const clientIcon = L.divIcon({ html: '<div style="background:#0a7e8c; width:20px; height:20px; border-radius:50%; border:2px solid white;"></div>', className: '', iconSize: [20,20], iconAnchor: [10,10] });
+    const clientIcon = L.divIcon({ html: '<div style="background:#0a7e8c; width:18px; height:18px; border-radius:50%; border:2px solid white;"></div>', className: '', iconSize: [18,18], iconAnchor: [9,9] });
     clientTrackingMarker = L.marker([state.clientLocation.lat, state.clientLocation.lng], { icon: clientIcon }).addTo(trackingMap);
   }
 
   function startTracking(orderId) {
     initTrackingMap();
-    state.currentTrackingId = orderId;
     if (trackingRouteLayer) trackingMap.removeLayer(trackingRouteLayer);
     db.collection('commandes').doc(orderId).onSnapshot(doc => {
       if (!doc.exists) return;
@@ -356,7 +343,7 @@
           if (routeData.routes?.[0]) {
             const coords = routeData.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
             if (trackingRouteLayer) trackingMap.removeLayer(trackingRouteLayer);
-            trackingRouteLayer = L.polyline(coords, { color: '#0a7e8c', weight: 5, opacity: 0.6 }).addTo(trackingMap);
+            trackingRouteLayer = L.polyline(coords, { color: '#0a7e8c', weight: 4, opacity: 0.6 }).addTo(trackingMap);
             trackingMap.fitBounds(trackingRouteLayer.getBounds().pad(0.3));
           }
         });
@@ -364,29 +351,76 @@
     });
   }
 
-  document.getElementById('backToHistoryBtn').addEventListener('click', () => showView('history'));
-
-  // Historique
   async function loadHistory() {
     const container = document.getElementById('historyContainer');
-    container.innerHTML = '<p>Chargement...</p>';
+    container.innerHTML = '<p style="font-size:0.8rem;">Chargement...</p>';
     try {
       const snapshot = await db.collection('commandes').orderBy('date', 'desc').limit(20).get();
       let html = '';
       snapshot.forEach(doc => {
         const d = doc.data();
-        html += `<div class="history-item"><strong>${d.date?.toDate().toLocaleDateString() || 'Date inconnue'}</strong> - ${d.product} | Livreur: ${d.livreur || 'N/A'} | ${d.price} FCFA<br><small>📍 ${d.clientAddress || ''}</small></div>`;
+        const dateCommande = d.date ? d.date.toDate() : null;
+        const dateLivraison = d.deliveredAt ? d.deliveredAt.toDate() : null;
+        let dateStr = 'Date inconnue';
+        if (dateCommande) {
+          const options = { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' };
+          dateStr = dateCommande.toLocaleDateString('fr-FR', options);
+        }
+        let livraisonStr = '';
+        if (d.status === 'livré' && dateLivraison) {
+          livraisonStr = ` | Livré à ${dateLivraison.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'})}`;
+        }
+        html += `<div class="history-item" data-id="${doc.id}"><strong>${dateStr}</strong> - ${d.product} | ${d.livreur || 'N/A'} | ${d.price} FCFA${livraisonStr}<br><small>📍 ${d.clientAddress || ''}</small></div>`;
       });
-      container.innerHTML = html || '<p>Aucune commande.</p>';
-    } catch(e) {
-      container.innerHTML = '<p>Erreur de chargement.</p>';
-    }
+      container.innerHTML = html || '<p style="font-size:0.8rem;">Aucune commande.</p>';
+      document.querySelectorAll('.history-item').forEach(item => {
+        item.addEventListener('click', () => {
+          const id = item.dataset.id;
+          db.collection('commandes').doc(id).get().then(doc => {
+            if (doc.exists) {
+              const data = doc.data();
+              if (data.clientLocation) state.clientLocation = { lat: data.clientLocation.latitude, lng: data.clientLocation.longitude };
+              startTracking(id);
+              showView('tracking');
+            }
+          });
+        });
+      });
+    } catch(e) { container.innerHTML = '<p>Erreur.</p>'; }
   }
 
-  // Espace Livreur
+  function initAdminMap() {
+    if (adminMap) return;
+    adminMap = L.map('adminMap', { center: [5.36, -4.0], zoom: 12, zoomControl: false, attributionControl: false });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(adminMap);
+    db.collection('commandes').where('status', '==', 'en_cours').onSnapshot(snapshot => {
+      const currentIds = new Set();
+      snapshot.forEach(doc => currentIds.add(doc.id));
+      Object.keys(adminMarkers).forEach(id => { if (!currentIds.has(id)) { adminMap.removeLayer(adminMarkers[id]); delete adminMarkers[id]; } });
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        if (data.livreurPosition) {
+          const pos = data.livreurPosition;
+          if (adminMarkers[doc.id]) {
+            adminMarkers[doc.id].setLatLng([pos.latitude, pos.longitude]);
+          } else {
+            const icon = L.divIcon({ html: '<div style="background:#e63946; width:28px; height:28px; border-radius:50%; border:2px solid white; display:flex; align-items:center; justify-content:center;">🛵</div>', className: '', iconSize: [28,28], iconAnchor: [14,14] });
+            const marker = L.marker([pos.latitude, pos.longitude], { icon }).addTo(adminMap);
+            marker.bindTooltip(`${data.livreur || 'Livreur'} - ${data.product}`);
+            adminMarkers[doc.id] = marker;
+          }
+        }
+      });
+      document.getElementById('adminCount').textContent = Object.keys(adminMarkers).length;
+    });
+  }
+
+  document.getElementById('refreshAdminBtn').addEventListener('click', () => adminMap?.invalidateSize());
+
   document.getElementById('startLivreurSession').addEventListener('click', async () => {
     const nom = document.getElementById('livreurName').value.trim();
-    if (!nom) return alert('Entrez votre nom');
+    const contact = document.getElementById('livreurContact').value.trim();
+    if (!nom || !contact) return alert('Remplissez nom et contact.');
     document.getElementById('livreurActive').classList.remove('hidden');
     const select = document.getElementById('orderSelect');
     select.innerHTML = '';
@@ -404,90 +438,71 @@
     const orderId = document.getElementById('orderSelect').value;
     if (!orderId) return alert('Sélectionnez une commande');
     const livreurName = document.getElementById('livreurName').value.trim();
+    const livreurContact = document.getElementById('livreurContact').value.trim();
+    const livreurAdresse = document.getElementById('livreurAdresse').value.trim();
     try {
-      await db.collection('commandes').doc(orderId).update({ status: 'en_cours', livreur: livreurName });
+      await db.collection('commandes').doc(orderId).update({
+        status: 'en_cours', livreur: livreurName, livreurContact, livreurAdresse
+      });
       document.getElementById('livraisonEnCours').classList.remove('hidden');
       if (navigator.geolocation) {
         const watchId = navigator.geolocation.watchPosition(
           pos => {
             db.collection('commandes').doc(orderId).update({
               livreurPosition: new firebase.firestore.GeoPoint(pos.coords.latitude, pos.coords.longitude)
-            }).catch(() => {});
+            });
           },
-          err => console.error('Erreur GPS livreur', err),
+          err => console.error(err),
           { enableHighAccuracy: true, maximumAge: 5000 }
         );
         state.livreurWatchId = watchId;
       }
-      alert('Livraison démarrée, position partagée.');
-    } catch(e) { alert('Erreur : ' + e.message); }
+      alert('Livraison démarrée !');
+    } catch(e) { alert('Erreur'); }
   });
 
   document.getElementById('finishDeliveryBtn').addEventListener('click', async () => {
     const orderId = document.getElementById('orderSelect').value;
     if (state.livreurWatchId) { navigator.geolocation.clearWatch(state.livreurWatchId); state.livreurWatchId = null; }
     try {
-      await db.collection('commandes').doc(orderId).update({ status: 'livré' });
-      alert('Livraison terminée !');
+      await db.collection('commandes').doc(orderId).update({
+        status: 'livré', deliveredAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      alert('Livraison terminée.');
       document.getElementById('livraisonEnCours').classList.add('hidden');
       document.getElementById('livreurActive').classList.add('hidden');
-    } catch(e) { alert('Erreur : ' + e.message); }
+    } catch(e) { alert('Erreur'); }
   });
 
-  // Navigation
   function showView(view) {
     document.querySelectorAll('.main-content').forEach(el => el.classList.add('hidden'));
-    if (view === 'order') document.getElementById('viewOrder').classList.remove('hidden');
-    else if (view === 'history') document.getElementById('viewHistory').classList.remove('hidden');
-    else if (view === 'tracking') document.getElementById('viewTracking').classList.remove('hidden');
-    else if (view === 'livreur') document.getElementById('viewLivreur').classList.remove('hidden');
+    document.getElementById('viewOrder').classList.toggle('hidden', view !== 'order');
+    document.getElementById('viewHistory').classList.toggle('hidden', view !== 'history');
+    document.getElementById('viewTracking').classList.toggle('hidden', view !== 'tracking');
+    document.getElementById('viewAdmin').classList.toggle('hidden', view !== 'admin');
+    document.getElementById('viewLivreur').classList.toggle('hidden', view !== 'livreur');
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     document.querySelector(`.nav-item[data-view="${view}"]`)?.classList.add('active');
-    setTimeout(() => {
-      mainMap?.invalidateSize();
-      trackingMap?.invalidateSize();
-    }, 100);
+    setTimeout(() => { mainMap?.invalidateSize(); trackingMap?.invalidateSize(); adminMap?.invalidateSize(); }, 100);
+    if (view === 'history') loadHistory();
+    if (view === 'admin') initAdminMap();
   }
 
-  document.querySelectorAll('.nav-item').forEach(item => {
-    item.addEventListener('click', () => showView(item.dataset.view));
-  });
+  document.querySelectorAll('.nav-item').forEach(item => item.addEventListener('click', () => showView(item.dataset.view)));
+  document.getElementById('backToHistoryBtn').addEventListener('click', () => showView('history'));
 
-  // Gestion mode sélection + GPS
-  document.getElementById('selectClientBtn').onclick = () => {
-    selectedMarkerMode = 'client';
-    document.getElementById('selectClientBtn').classList.add('active');
-    document.getElementById('selectPickupBtn').classList.remove('active');
-  };
-  document.getElementById('selectPickupBtn').onclick = () => {
-    selectedMarkerMode = 'pickup';
-    document.getElementById('selectPickupBtn').classList.add('active');
-    document.getElementById('selectClientBtn').classList.remove('active');
-  };
+  document.getElementById('selectClientBtn').onclick = () => { selectedMarkerMode='client'; selectClientBtn.classList.add('active'); selectPickupBtn.classList.remove('active'); };
+  document.getElementById('selectPickupBtn').onclick = () => { selectedMarkerMode='pickup'; selectPickupBtn.classList.add('active'); selectClientBtn.classList.remove('active'); };
   document.getElementById('gpsCenterBtn').onclick = useGPSForSelectedMarker;
 
-  // Synchronisation des champs texte (produit + autres)
-  document.getElementById('productDescription').addEventListener('input', e => state.product = e.target.value);
-  document.getElementById('clientName').addEventListener('input', e => state.clientName = e.target.value);
-  document.getElementById('clientContact').addEventListener('input', e => state.clientContact = e.target.value);
-  document.getElementById('clientAddress').addEventListener('input', e => state.clientAddress = e.target.value);
-  document.getElementById('pickupName').addEventListener('input', e => state.pickupName = e.target.value);
-  document.getElementById('pickupContact').addEventListener('input', e => state.pickupContact = e.target.value);
-  document.getElementById('pickupAddress').addEventListener('input', e => state.pickupAddress = e.target.value);
-
-  // Init
   document.getElementById('productDescription').value = state.product;
   initMainMap();
   showView('order');
   loadHistory();
   updateNearbyStats();
 
-  // PWA
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register("data:application/javascript," + encodeURIComponent(
-      "self.addEventListener('fetch', e => { e.respondWith(fetch(e.request).catch(() => caches.match(e.request))); });" +
-      "self.addEventListener('install', () => self.skipWaiting());"
-    ));
+    navigator.serviceWorker.register("data:application/javascript," + encodeURIComponent("self.addEventListener('fetch', e => { e.respondWith(fetch(e.request).catch(() => caches.match(e.request))); }); self.addEventListener('install', () => self.skipWaiting());"));
   }
 </script>
 </body>
